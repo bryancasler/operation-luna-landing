@@ -613,7 +613,7 @@ FORM: schematic map plus ledger list; mobile single column; no page-load motion.
     </div>
     <div class="popover" id="map-popover" hidden>
       <p class="map-note" id="chart-note" hidden></p>
-      <p class="map-note" id="chart-about" hidden>Up and to the left is the sweet spot: better reviews for less money. Each dot sits at the building's monthly cost with no discounts, since nobody knows what deal will be running when you sign; the with-discount and income-restricted numbers are on each card. The dashed line is the $2,000 ceiling and the faint line is the trend. Same colors as the map: grey dots are the buildings your filters show, numbered by their place in the list, green dots are on your short list, and faded red dots are the ones the filters exclude, shown for a moment when the chart first appears and then faded away (the legend entry or the filters checkbox brings them back). Green rings mark the value leaders: buildings in your list that sit well above the trend line, up and to the left.</p>
+      <p class="map-note" id="chart-about" hidden>Up and to the left is the sweet spot: better reviews for less money. Each dot sits at the building's monthly cost with no discounts, since nobody knows what deal will be running when you sign; the with-discount and income-restricted numbers are on each card. The dashed line is the $2,000 ceiling and the faint line is the trend. Same colors as the map: grey dots are the buildings your filters show, numbered by their place in the list, green dots are on your short list, and faded red dots are the ones the filters exclude. The chart always keeps them on it, so you can see what the filters are cutting; the hide switch only affects the map. Green rings mark the value leaders: buildings in your list that sit well above the trend line, up and to the left.</p>
       <p class="map-note">Not to scale. Rings are rough walking minutes from the park. Green dots are on your short list, grey dots are the rest of the list below, and the number in each is its place in the list under the current sort. Faded red dots are the ones the filters exclude; they show for a moment when the map first appears, then fade away, and the legend entry or the filters checkbox brings them back. Buildings you've hidden don't show at all. <span id="fade-note"></span> Tap a dot to jump to one; tapping a red one opens the filters wide.</p>
     </div>
     <details class="filters-panel" id="filters">
@@ -1778,7 +1778,7 @@ FORM: schematic map plus ledger list; mobile single column; no page-load motion.
     var ex = buildings.filter(function (b) { return !passes(b) && !(state.hidden[b.id] && !state.filters.showHidden); }).length;
     var el2 = document.getElementById("f-hideExcluded"), lab2 = document.getElementById("f-hideExcluded-label");
     if (el2) el2.checked = !!state.mapHideExcluded;
-    if (lab2) lab2.textContent = "Hide the " + ex + (ex === 1 ? " building" : " buildings") + " you've filtered out";
+    if (lab2) lab2.textContent = "Hide the " + ex + (ex === 1 ? " building" : " buildings") + " you've filtered out on the map";
     document.getElementById("v-price").textContent = money(f.priceMax) + (f.priceMax >= BOUNDS.priceMax ? " (everything)" : "");
     document.getElementById("v-rating").textContent = fmtScore(f.ratingMin) + (f.ratingMin <= BOUNDS.ratingMin ? " (everything)" : "");
     document.getElementById("v-reviews").textContent = f.reviewsMin === 0 ? "0 (everything)" : String(f.reviewsMin);
@@ -2277,6 +2277,7 @@ FORM: schematic map plus ledger list; mobile single column; no page-load motion.
   var pageShown = false, mapInView = false;
   function runIntro() {
     var view = state.view;
+    if (view === "chart") return;   // the chart never hides the excluded buildings
     if (REDUCED) { introDone.map = introDone.chart = true; return; }
     if (!pageShown || !mapInView || !state.mapHideExcluded || introDone[view] || introTimer) return;
     introTimer = setTimeout(function () {
@@ -2357,7 +2358,7 @@ FORM: schematic map plus ledger list; mobile single column; no page-load motion.
     buildings.forEach(function (b) {
       var a = adjusted(b), c = costs(b);
       if (!c || a === null || state.hidden[b.id]) return;
-      if (!order[b.id] && state.mapHideExcluded && introDone.chart) return;
+      // the chart keeps every priced building on it regardless of the hide switch
       pts.push({ b: b, x: c.noDeal, y: a, lo: c.low, hi: c.high, shown: !!order[b.id], n: order[b.id] || 0 });
     });
     var wide = host.getBoundingClientRect().width >= 560;
