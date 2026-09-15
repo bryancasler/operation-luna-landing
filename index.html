@@ -152,6 +152,8 @@ FORM: schematic map plus ledger list; mobile single column; no page-load motion.
   .map .dot circle.pt { stroke: var(--paper); stroke-width: 1.5; }
   .map .dot text.num { fill: #fff; font-size: 8px; font-weight: 700; pointer-events: none; }
   .map .dot .leader { stroke: var(--ink-2); stroke-width: 0.7; opacity: 0.7; }
+  .map .dot.out { transition: opacity 900ms ease-in; }
+  .map .dot.out.fading, .chart .out.fading, .chart text.out.fading, .chart .leader.out.fading { opacity: 0 !important; transition: opacity 900ms ease-in; }
   .map .dot:focus { outline: none; }
   .map .dot:focus-visible circle.pt { stroke: var(--ink); stroke-width: 2; }
   .legend { display: flex; flex-wrap: wrap; gap: 0.35rem 1rem; font-size: 0.82rem; color: var(--ink-2); padding: 0; }
@@ -192,8 +194,12 @@ FORM: schematic map plus ledger list; mobile single column; no page-load motion.
   .chart .range { stroke-width: 3; stroke-linecap: round; opacity: 0.45; }
   .chart .range-iz { stroke-width: 2; stroke-dasharray: 2 4; opacity: 0.55; }
   .chart .pt { stroke: var(--paper); stroke-width: 1.2; }
+  .chart .cpt, .chart .clabel { cursor: pointer; }
+  .chart .cpt .hit { fill: transparent; }
+  .chart .cpt:hover .pt, .chart .cpt:focus .pt { stroke: var(--park); stroke-width: 2.5; }
+  .chart .cpt:focus { outline: none; }
+  .chart .clabel:hover { fill: var(--park-dark); text-decoration: underline; }
   .chart .vring { fill: none; stroke: var(--park); stroke-width: 1.8; }
-  .chart .pt { stroke: var(--paper); stroke-width: 1.2; }
   .chart .cnum { fill: #fff; font-size: 8px; font-weight: 700; pointer-events: none; }
   .chart .out, .chart text.out, .chart .leader.out { opacity: 0.35; }
   [hidden] { display: none !important; }
@@ -607,8 +613,8 @@ FORM: schematic map plus ledger list; mobile single column; no page-load motion.
     </div>
     <div class="popover" id="map-popover" hidden>
       <p class="map-note" id="chart-note" hidden></p>
-      <p class="map-note" id="chart-about" hidden>Up and to the left is the sweet spot: better reviews for less money. Each dot sits at the building's monthly cost with no discounts, since nobody knows what deal will be running when you sign; the with-discount and income-restricted numbers are on each card. The dashed line is the $2,000 ceiling and the faint line is the trend. Same colors as the map: grey dots are the buildings your filters show, numbered by their place in the list, green dots are on your short list, and faded red dots are the ones the filters exclude (tap that legend entry to drop them). Green rings mark the value leaders: buildings in your list that sit well above the trend line, up and to the left.</p>
-      <p class="map-note">Not to scale. Rings are rough walking minutes from the park. Green dots are on your short list, grey dots are the rest of the list below, and the number in each is its place in the list under the current sort. Faded red dots are the ones the filters exclude; tap that legend entry to drop them from the map. Buildings you've hidden don't show at all. <span id="fade-note"></span> Tap a dot to jump to one; tapping a red one opens the filters wide.</p>
+      <p class="map-note" id="chart-about" hidden>Up and to the left is the sweet spot: better reviews for less money. Each dot sits at the building's monthly cost with no discounts, since nobody knows what deal will be running when you sign; the with-discount and income-restricted numbers are on each card. The dashed line is the $2,000 ceiling and the faint line is the trend. Same colors as the map: grey dots are the buildings your filters show, numbered by their place in the list, green dots are on your short list, and faded red dots are the ones the filters exclude, shown for a moment when the chart first appears and then faded away (the legend entry or the filters checkbox brings them back). Green rings mark the value leaders: buildings in your list that sit well above the trend line, up and to the left.</p>
+      <p class="map-note">Not to scale. Rings are rough walking minutes from the park. Green dots are on your short list, grey dots are the rest of the list below, and the number in each is its place in the list under the current sort. Faded red dots are the ones the filters exclude; they show for a moment when the map first appears, then fade away, and the legend entry or the filters checkbox brings them back. Buildings you've hidden don't show at all. <span id="fade-note"></span> Tap a dot to jump to one; tapping a red one opens the filters wide.</p>
     </div>
     <details class="filters-panel" id="filters">
       <summary>Filters <span class="fsum" id="filters-summary"></span></summary>
@@ -634,7 +640,8 @@ FORM: schematic map plus ledger list; mobile single column; no page-load motion.
           <label><input type="checkbox" id="f-laundry"> In-unit washer and dryer</label>
           <label><input type="checkbox" id="f-utilities"> Utilities included in rent</label>
           <label><input type="checkbox" id="f-iz"> Has income-restricted units</label>
-          <label><input type="checkbox" id="f-showHidden"> <span id="f-showHidden-label">Show the buildings you've hidden</span></label>
+          <label><input type="checkbox" id="f-hideExcluded"> <span id="f-hideExcluded-label">Hide the buildings you've filtered out</span></label>
+          <label id="f-showHidden-wrap" hidden><input type="checkbox" id="f-showHidden"> <span id="f-showHidden-label">Show the buildings you've hidden</span></label>
         </div>
       </div>
     </details>
@@ -1609,7 +1616,9 @@ FORM: schematic map plus ledger list; mobile single column; no page-load motion.
     sort: ["cost", "costdeal", "name"].indexOf(saved.sort) >= 0 ? saved.sort : "rating",
     filters: saved.filters || null,
     filtersOpen: false,
-    mapHideExcluded: !!saved.mapHideExcluded,
+    // on by default; the v2 flag flips it once for anyone who saved the old default
+    mapHideExcluded: saved.v2 ? !!saved.mapHideExcluded : true,
+    v2: true,
     view: saved.view === "chart" ? "chart" : "map",
     selected: saved.selected === undefined ? { highview: true } : saved.selected,
     notes: saved.notes || {},
@@ -1763,8 +1772,13 @@ FORM: schematic map plus ledger list; mobile single column; no page-load motion.
     setRange("f-reviews-min", 0, BOUNDS.reviewsMax, 5, f.reviewsMin);
     setRange("f-walk-max", BOUNDS.walkMin, BOUNDS.walkMax, 5, f.walkMax);
     ["central", "laundry", "utilities", "iz", "showHidden"].forEach(function (k) { var el = document.getElementById("f-" + k); if (el) el.checked = !!f[k]; });
-    var hn = hiddenList().length, hl = document.getElementById("f-showHidden-label");
+    var hn = hiddenList().length, hl = document.getElementById("f-showHidden-label"), hw = document.getElementById("f-showHidden-label").parentElement;
     if (hl) hl.textContent = "Show the " + hn + (hn === 1 ? " building" : " buildings") + " you've hidden";
+    if (hw) hw.hidden = hn === 0;
+    var ex = buildings.filter(function (b) { return !passes(b) && !(state.hidden[b.id] && !state.filters.showHidden); }).length;
+    var el2 = document.getElementById("f-hideExcluded"), lab2 = document.getElementById("f-hideExcluded-label");
+    if (el2) el2.checked = !!state.mapHideExcluded;
+    if (lab2) lab2.textContent = "Hide the " + ex + (ex === 1 ? " building" : " buildings") + " you've filtered out";
     document.getElementById("v-price").textContent = money(f.priceMax) + (f.priceMax >= BOUNDS.priceMax ? " (everything)" : "");
     document.getElementById("v-rating").textContent = fmtScore(f.ratingMin) + (f.ratingMin <= BOUNDS.ratingMin ? " (everything)" : "");
     document.getElementById("v-reviews").textContent = f.reviewsMin === 0 ? "0 (everything)" : String(f.reviewsMin);
@@ -1918,7 +1932,9 @@ FORM: schematic map plus ledger list; mobile single column; no page-load motion.
     if (typeof drawChart === "function" && state.view === "chart") drawChart();
   }
 
-  // Map mirrors the list: filtered and hidden buildings drop off
+  // Map mirrors the list: filtered and hidden buildings drop off.
+  // When "hide the filtered out" is on, each view shows the excluded buildings once as it first comes into view, then fades them out.
+  var introDone = { map: false, chart: false }, introTimer = null;
   var dotById = {};
   function syncMap(rows) {
     var shown = {}, order = {};
@@ -1935,13 +1951,15 @@ FORM: schematic map plus ledger list; mobile single column; no page-load motion.
       if (userHidden) { d.g.style.display = "none"; return; }
       d.g.style.display = "";
       if (!shown[b.id]) {
-        // filtered out: faded red so it reads as excluded, or dropped entirely if the box under the map is ticked
-        if (state.mapHideExcluded) { d.g.style.display = "none"; return; }
+        // filtered out: faded red so it reads as excluded, or dropped once the intro has played if hiding is on
+        if (state.mapHideExcluded && introDone.map) { d.g.style.display = "none"; return; }
         d.pt.setAttribute("fill", "#B4432F"); d.pt.setAttribute("r", "5.5");
         d.num.style.display = "none";
+        d.g.classList.toggle("out", true);
         d.g.style.opacity = "0.3";
         return;
       }
+      d.g.classList.toggle("out", false);
       d.pt.setAttribute("fill", state.selected[b.id] ? "#1F6E5B" : "#5B6B75"); d.pt.setAttribute("r", "8");
       d.num.textContent = String(order[b.id]); d.num.style.display = "";
       var v = metric(b), op = 1;
@@ -1957,7 +1975,7 @@ FORM: schematic map plus ledger list; mobile single column; no page-load motion.
     var outLegend = document.getElementById("map-hide-excluded");
     if (outLegend) {
       outLegend.setAttribute("aria-pressed", state.mapHideExcluded ? "true" : "false");
-      outLegend.textContent = state.mapHideExcluded ? "Doesn't meet the filters (hidden)" : "Doesn't meet the filters";
+      outLegend.textContent = state.mapHideExcluded ? "Filtered out (hidden, tap to show)" : "Filtered out (tap to hide)";
     }
     var fadeEl = document.getElementById("fade-note");
     if (fadeEl) fadeEl.textContent = state.sort === "cost"
@@ -1987,7 +2005,7 @@ FORM: schematic map plus ledger list; mobile single column; no page-load motion.
     if (n) barMsg.textContent = n + (n === 1 ? " building" : " buildings") + " on the short list";
     bar.classList.toggle("on", n > 0 && !barHeld);
   }
-  function releaseBar(delay) { setTimeout(function () { barHeld = false; updateBar(); }, delay || 0); }
+  function releaseBar(delay) { setTimeout(function () { barHeld = false; updateBar(); pageShown = true; if (typeof runIntro === "function") runIntro(); }, delay || 0); }
   function holdBar() { barHeld = true; updateBar(); }
   function shortSorted(list) {
     var copy = list.slice();
@@ -2256,12 +2274,43 @@ FORM: schematic map plus ledger list; mobile single column; no page-load motion.
     document.querySelectorAll("#view-seg button").forEach(function (x) { x.setAttribute("aria-pressed", x.getAttribute("data-view") === state.view ? "true" : "false"); });
     if (chart) drawChart();
   }
+  var pageShown = false, mapInView = false;
+  function runIntro() {
+    var view = state.view;
+    if (REDUCED) { introDone.map = introDone.chart = true; return; }
+    if (!pageShown || !mapInView || !state.mapHideExcluded || introDone[view] || introTimer) return;
+    introTimer = setTimeout(function () {
+      var box = view === "chart" ? document.getElementById("chart") : document.getElementById("map-view");
+      box.querySelectorAll(".out").forEach(function (el) { el.classList.add("fading"); });
+      setTimeout(function () {
+        introDone[view] = true; introTimer = null;
+        syncMap(sorted(visible())); if (state.view === "chart") drawChart();
+      }, 950);
+    }, 1400);
+  }
+  var resizeTimer = null;
+  window.addEventListener("resize", function () {
+    if (resizeTimer) clearTimeout(resizeTimer);
+    resizeTimer = setTimeout(function () { if (state.view === "chart") drawChart(); }, 200);
+  });
+  if ("IntersectionObserver" in window) {
+    var mapBox = document.querySelector(".map");
+    new IntersectionObserver(function (entries) {
+      entries.forEach(function (en) { mapInView = en.isIntersecting && en.intersectionRatio >= 0.35; if (mapInView) runIntro(); });
+    }, { threshold: [0, 0.35] }).observe(mapBox);
+  } else { introDone.map = introDone.chart = true; }
   document.querySelectorAll("#view-seg button").forEach(function (btn) {
-    btn.addEventListener("click", function () { anchored(btn, function () { state.view = btn.getAttribute("data-view"); persist(); applyView(); }); });
+    btn.addEventListener("click", function () { anchored(btn, function () { state.view = btn.getAttribute("data-view"); persist(); applyView(); runIntro(); }); });
   });
-  document.getElementById("map-hide-excluded").addEventListener("click", function (e) {
-    anchored(e.currentTarget, function () { state.mapHideExcluded = !state.mapHideExcluded; persist(); syncMap(sorted(visible())); if (state.view === "chart") drawChart(); });
-  });
+  function setHideExcluded(on, el) {
+    anchored(el, function () {
+      state.mapHideExcluded = on; persist();
+      introDone.map = true; introDone.chart = true;   // a deliberate choice ends the intro
+      syncFilterControls(); syncMap(sorted(visible())); if (state.view === "chart") drawChart();
+    });
+  }
+  document.getElementById("map-hide-excluded").addEventListener("click", function (e) { setHideExcluded(!state.mapHideExcluded, e.currentTarget); });
+  document.getElementById("f-hideExcluded").addEventListener("change", function (e) { setHideExcluded(e.target.checked, e.target); });
   var infoBtn = document.getElementById("map-info"), popover = document.getElementById("map-popover");
   function setPopover(open) { popover.hidden = !open; infoBtn.setAttribute("aria-expanded", open ? "true" : "false"); }
   infoBtn.addEventListener("click", function (e) { e.stopPropagation(); setPopover(popover.hidden); });
@@ -2308,10 +2357,12 @@ FORM: schematic map plus ledger list; mobile single column; no page-load motion.
     buildings.forEach(function (b) {
       var a = adjusted(b), c = costs(b);
       if (!c || a === null || state.hidden[b.id]) return;
-      if (!order[b.id] && state.mapHideExcluded) return;
+      if (!order[b.id] && state.mapHideExcluded && introDone.chart) return;
       pts.push({ b: b, x: c.noDeal, y: a, lo: c.low, hi: c.high, shown: !!order[b.id], n: order[b.id] || 0 });
     });
-    var X0 = 1400, X1 = 2500, Y0 = 2.7, Y1 = 4.7, L = 40, R = 368, T = 16, B = 436;
+    var wide = host.getBoundingClientRect().width >= 560;
+    var W = wide ? 680 : 380, H = wide ? 400 : 472;
+    var X0 = 1400, X1 = 2500, Y0 = 2.7, Y1 = 4.7, L = 40, R = W - 12, T = 16, B = H - 36;
     function sx(v) { return L + (v - X0) / (X1 - X0) * (R - L); }
     function sy(v) { return B - (v - Y0) / (Y1 - Y0) * (B - T); }
     var n = pts.length, mx = 0, my = 0;
@@ -2326,7 +2377,7 @@ FORM: schematic map plus ledger list; mobile single column; no page-load motion.
     var stars = ranked.filter(function (p) { return inList[p.b.id] && p.res >= 0.33; });
     var starIds = {}; stars.forEach(function (p) { starIds[p.b.id] = true; });
 
-    var o = '<svg viewBox="0 0 380 472" role="img" aria-label="Scatter chart of adjusted review score against effective monthly cost for each building">';
+    var o = '<svg viewBox="0 0 ' + W + ' ' + H + '" role="img" aria-label="Scatter chart of adjusted review score against effective monthly cost for each building">';
     // axes and ticks
     o += '<line class="axis" x1="' + L + '" y1="' + B + '" x2="' + R + '" y2="' + B + '"/>';
     o += '<line class="axis" x1="' + L + '" y1="' + T + '" x2="' + L + '" y2="' + B + '"/>';
@@ -2354,7 +2405,7 @@ FORM: schematic map plus ledger list; mobile single column; no page-load motion.
     function hits(b) {
       for (var i = 0; i < placed.length; i++) { var q = placed[i]; if (b.x1 < q.x2 && b.x2 > q.x1 && b.y1 < q.y2 && b.y2 > q.y1) return true; }
       for (var j = 0; j < dotBoxes.length; j++) { var d = dotBoxes[j]; if (b.x1 < d.x2 && b.x2 > d.x1 && b.y1 < d.y2 && b.y2 > d.y1) return true; }
-      return b.x1 < L - 2 || b.x2 > 378 || b.y1 < T - 4 || b.y2 > B;
+      return b.x1 < L - 2 || b.x2 > W - 2 || b.y1 < T - 4 || b.y2 > B;
     }
     function candidate(kind, x, y, w) {
       var spec = {
@@ -2373,14 +2424,18 @@ FORM: schematic map plus ledger list; mobile single column; no page-load motion.
     }
     pts.forEach(function (p) {
       var x = sx(p.x), y = sy(p.y);
+      var title = "<title>" + esc(p.b.name) + ", " + p.y.toFixed(1) + " out of 5.0 at " + money(p.x) + " a month. Tap to open.</title>";
       if (!p.shown) {
-        o += '<g class="out"><circle class="pt" cx="' + x + '" cy="' + y + '" r="4.5" fill="#B4432F"/></g>';
+        o += '<g class="out cpt" data-id="' + p.b.id + '" tabindex="0" role="button">' + title + '<circle class="hit" cx="' + x + '" cy="' + y + '" r="12"/><circle class="pt" cx="' + x + '" cy="' + y + '" r="4.5" fill="#B4432F"/></g>';
         return;
       }
       var col = state.selected[p.b.id] ? "#1F6E5B" : "#5B6B75", rr = byName ? 5.5 : 8;
+      o += '<g class="cpt" data-id="' + p.b.id + '" tabindex="0" role="button">' + title;
+      o += '<circle class="hit" cx="' + x + '" cy="' + y + '" r="14"/>';
       if (starIds[p.b.id]) o += '<circle class="vring" cx="' + x + '" cy="' + y + '" r="' + (rr + 3.5) + '"/>';
       o += '<circle class="pt" cx="' + x + '" cy="' + y + '" r="' + rr + '" fill="' + col + '"/>';
       if (!byName) o += '<text class="cnum" x="' + x + '" y="' + (y + 2.8) + '" text-anchor="middle">' + p.n + "</text>";
+      o += "</g>";
     });
     pts.forEach(function (p) {
       var x = sx(p.x), y = sy(p.y);
@@ -2396,10 +2451,15 @@ FORM: schematic map plus ledger list; mobile single column; no page-load motion.
         var steps = 4;
         for (var q = 1; q < steps; q++) { var lx = x + (ax - x) * q / steps, ly = y + (ay - y) * q / steps; placed.push({ x1: lx - 1.5, x2: lx + 1.5, y1: ly - 1.5, y2: ly + 1.5 }); }
       }
-      o += '<text' + (p.shown ? "" : ' class="out"') + ' x="' + pick.x + '" y="' + pick.y + '" text-anchor="' + pick.a + '">' + esc(name) + '</text>';
+      o += '<text class="clabel' + (p.shown ? "" : " out") + '" data-id="' + p.b.id + '" x="' + pick.x + '" y="' + pick.y + '" text-anchor="' + pick.a + '">' + esc(name) + '</text>';
     });
     o += '</svg>';
     host.innerHTML = o;
+    host.querySelectorAll(".cpt, .clabel").forEach(function (el) {
+      var id = el.getAttribute("data-id");
+      el.addEventListener("click", function () { goTo(id); });
+      el.addEventListener("keydown", function (e) { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); goTo(id); } });
+    });
 
     var ar = Math.abs(r), strength = ar < 0.2 ? "next to no" : ar < 0.4 ? "a weak" : ar < 0.6 ? "a moderate" : "a strong";
     var dir = r > 0 ? "positive" : "negative";
