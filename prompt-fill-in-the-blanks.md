@@ -1,6 +1,6 @@
 # Prompt A: rebuild Operation Luna Landing for a new area (fill in the blanks)
 
-> **Use Claude Fable 5.1 Max with Research Mode enabled.** This rebuild depends on several long research passes and a lot of code work in one session. A smaller model or a session without Research Mode will cut corners on the building data.
+> **Use Claude Opus 5.5 Max.** This rebuild depends on several long research passes and a lot of code work in one session. A smaller model or a lower effort setting will cut corners on the building data.
 
 
 Fill in every [bracket] below, attach a photo, and paste the whole thing to Claude. The original page and its files are at https://github.com/bryancasler/operation-luna-landing (live at https://bryancasler.github.io/operation-luna-landing/); if Claude can't fetch GitHub in your session, download `index.html` and `operation-luna-landing-og.png` from that repo and attach them instead. Delete this paragraph before sending.
@@ -22,7 +22,7 @@ The starting point is a single-file web page called Operation Luna Landing. The 
 
 ## Money
 
-- Ceiling: [$X,XXX] a month with no discounts. Goal: [$X,XXX] or less. Keep the page's cost model: twelve months of rent minus advertised free months, plus pet rent, required building fees, one-time fees spread across the year, and the utilities they'd pay themselves, with a stated estimate for utilities when nothing is included. Show the no-deal number as the headline on each card.
+- Ceiling: [$X,XXX] a month with no discounts. Goal: [$X,XXX] or less. Keep the page's cost model: twelve months of rent minus advertised free months, plus pet rent, required building fees, one-time fees spread across the year, and the utilities they'd pay themselves, with a stated estimate for utilities when nothing is included. Show the no-deal number as the headline on each card. The old math charges pet rent once, for one dog, and leaves the one-time pet fee out because DC bans it. Pet rent is usually per pet, and one-time pet fees often are too, so count them for both cats unless the building says one charge covers both, and say which in each building's cat policy. Put non-refundable pet fees back into the one-time fees unless Virginia law bars them; refundable deposits stay out, as before.
 
 ## Pets
 
@@ -50,7 +50,7 @@ I'll publish it on GitHub Pages at [https://USERNAME.github.io/REPO-NAME/]. Poin
 
 ## How to work
 
-- Do the research neighborhood by neighborhood with the same fields the old page uses for every building: name, address, management, year built, unit and size, base rent, listing links, what utilities are included, monthly fees, current deals with conditions, one-time fees, air conditioning and heat type, in-unit laundry, walk time to my address and to transit, Google rating and count from the building's own profile, ApartmentRatings score and written-review count (say whether it's survey-based), recurring review themes, and the cat policy in full. Mark anything estimated versus verified, and date the data.
+- Do the research neighborhood by neighborhood with these fields for every building: name, address, management, year built, unit and size, base rent, listing links, what utilities are included, monthly fees, current deals with conditions, one-time fees, air conditioning and heat type, in-unit laundry, walk time to my address and to transit, Google rating and count from the building's own profile, ApartmentRatings score and written-review count (say whether it's survey-based), recurring review themes, and the cat policy in full. Mark anything estimated versus verified, and date the data. The old page has no fields of its own for year built or walk time to transit (they show up only in free text, mostly the address, verdict, and air, heat, and laundry notes), so add both as data fields, name the station or stop for transit, and show both in each card's facts.
 - After each pass, fold the buildings into the page's data, keep a ruled-out list with reasons, and re-check that the map has no overlapping labels, the filters' default values make sense for this price range (start tight enough that four to eight buildings show), and the score threshold default sits near the list average.
 - Before you hand it back, run the same checks the old page went through: the HTML parses with no unclosed tags, the script has no errors in a headless browser, nothing overflows at 360, 390, and 1280 pixels wide, every dialog button works inside a sandboxed iframe (they must be click handlers, not form submits), a full reset returns the page to first-visit state, and the design detector flags nothing. Tell me what you verified and what you couldn't.
 - Voice rules for anything I'll be reading or sending: no em dashes, no filler words, short sentences mixed with longer ones, define any local jargon the first time it appears, and say plainly when something is a guess.
