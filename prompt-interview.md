@@ -1,6 +1,6 @@
 # Prompt B: rebuild Operation Luna Landing for a new area (Claude asks you one question at a time)
 
-> **Use Claude Fable 5.1 Max with Research Mode enabled.** This rebuild depends on several long research passes and a lot of code work in one session. A smaller model or a session without Research Mode will cut corners on the building data.
+> **Use Claude Opus 5.5 Extra with Research Mode off, and turn on web search and code execution.** Claude does all the research itself in this chat, so the prompt spells out which sources to check for each building and when a neighborhood is finished. Without web search it can't price anything, and without code execution it can't resize the photo, build the share image, or test the page.
 
 
 Paste everything below this line to Claude as your first message. You don't need to prepare anything except a photo of the cats; Claude will ask for it when it's time. Delete this paragraph before sending.
@@ -15,14 +15,14 @@ It was built to help one person find a studio near a park in Washington, DC with
 
 - It's for my brother and his wife and their two cats, and I'm making it for them. The page should read as me writing to them: plain language, first person, warm but not gushing.
 - The anchor is my home in Virginia, and the point is walking distance from me. My address replaces the park in everything: the map rings, the walk filter, the card facts, the walk times.
-- The old page's DC pet law section (DC Law 25-308) does not apply in Virginia. Remove it and every mention of it from the cards, the questions, the pills, and the cost math, and replace it with whatever actually governs pet fees and deposits in Virginia right now, checked against primary sources. If nothing caps them, say so and use the advertised fees.
+- The old page's DC pet law section (DC Law 25-308) does not apply in Virginia. Remove it and every mention of it from the cards, the questions, the pills, and the cost math, and replace it with whatever actually governs pet fees and deposits in Virginia right now, checked against primary sources: the statute text itself, plus any bill from the most recent General Assembly session that changed it. The DC law sat unenforced for over a year until a 2026 budget bill put it into effect, so don't trust a summary. If nothing caps them, say so and use the advertised fees.
 - The old page's Inclusionary Zoning section is DC-specific. Replace it with the local equivalent if one exists for my neighborhoods (Arlington's and Alexandria's affordable dwelling unit programs, for example), with real income limits and how the waitlist works, or drop it. No DC program names anywhere.
 
 ## What to interview me about, in this order
 
 1. My name and how to refer to my brother, his wife, and each cat.
 2. My address or cross streets, so the map and walk times have their center.
-3. The neighborhoods to sweep, one research pass each. If I only name one, suggest the two or three next to it and ask which to include.
+3. The neighborhoods to sweep, one pass each. If I only name one, suggest the two or three next to it and ask which to include.
 4. The unit type they want, and anything about them that changes the search (a car, working from home, a schedule).
 5. Move-in window, and today's date.
 6. The monthly ceiling with no discounts, and the goal number.
@@ -44,8 +44,13 @@ Resize the cat photo to about 700 pixels on the long side, compress it to under 
 
 ## How to work once the interview is done
 
+Once I've said yes to the summary, work straight through every neighborhood and the build without checking in. Stop and ask only when you can't go on without me: GitHub is unreachable, you need a fact only I know, or two readings of my instructions would produce different pages. If a reply runs out of room, end it with which neighborhoods are done and what's next, and pick up there when I say continue.
+
 - Research neighborhood by neighborhood with the same fields the old page uses for every building: name, address, management, year built, unit and size, base rent, listing links, what utilities are included, monthly fees, current deals with conditions, one-time fees, air conditioning and heat type, in-unit laundry, walk time to my address and to transit, Google rating and count from the building's own profile, ApartmentRatings score and written-review count (say whether it's survey-based), recurring review themes, and the cat policy in full. Mark estimated versus verified, and date the data.
-- After each pass, fold the buildings into the page's data, keep a ruled-out list with reasons, and re-check that the map has no overlapping labels, the filters' defaults make sense for this price range (tight enough that four to eight buildings show), and the score threshold default sits near the list average.
+- Start each neighborhood by listing every candidate building before you research any of them. Search at least two listing sites (Apartments.com, Zillow, RentCafe, or Apartment List) and the big management companies' own sites, so the list doesn't depend on one site's coverage.
+- For each building, check its own site (the pricing page and the pet policy, not just the home page), at least one listing site, its Google profile, and ApartmentRatings. ApartmentRatings often blocks automated reading; when it does, use what its pages show in search results and say so on the card. When two sources disagree on rent, fees, or the cat policy, record both and say which one the card uses.
+- Keep a working notes file with the source and date for every rent, fee, and pet-policy figure, and write to it as you go. Fold each neighborhood into the page's data at the end of its pass, so nothing depends on search results from much earlier in the chat.
+- A neighborhood is done when every candidate is either in the data or on the ruled-out list with a reason. Then re-check that the map has no overlapping labels, the filters' defaults make sense for this price range (tight enough that four to eight buildings show), and the score threshold default sits near the list average.
 - Before you hand it back, run the checks the old page went through: the HTML parses with no unclosed tags, the script has no errors in a headless browser, nothing overflows at 360, 390, and 1280 pixels wide, every dialog button works inside a sandboxed iframe (click handlers, not form submits), a full reset returns the page to first-visit state, and the design detector flags nothing. Tell me what you verified and what you couldn't.
 - Deliver the same four files the old repo had: `index.html`, the share image PNG, `README.md` rewritten for this search, and `.nojekyll`.
 - Voice rules for anything I'll be reading or sending: no em dashes, no filler words, short sentences mixed with longer ones, define local jargon the first time it appears, and say plainly when something is a guess.
