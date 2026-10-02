@@ -792,7 +792,7 @@ FORM: schematic map plus ledger list; mobile single column; no page-load motion.
   function costs(b) {
     var rent = rentFor(b);
     if (rent === null || rent === undefined) return null;
-    var monthly = utilFor(b) + b.feesMo + petRentCapped(b), spread = (b.oneTime - (b.petOnce || 0)) / 12;
+    var monthly = utilFor(b) + b.feesMo + petRentCapped(b), spread = Math.max(0, b.oneTime - (b.petOnce || 0)) / 12;
     var noDeal = rent + monthly + spread;
     var scen = [];
     var izCap = state.unit === "1br" ? IZ_1BR_CAP : IZ_STUDIO_CAP;
@@ -1636,7 +1636,7 @@ FORM: schematic map plus ledger list; mobile single column; no page-load motion.
       dog: "confirmed",
       verdict: "A 2014 building with one-bedrooms from $2,036 and 1.5 months free on select units, which lands it under the ceiling. The cheapest one-bedroom is 488 sq ft, which is tight for a big dog.",
       baseRent: null, brRent: 2036, brSqft: "488 to 731 sq ft", brNote: "The $2,036 unit is the small one; larger one-bedrooms cost more.", brDeals: [{ months: 1.5, label: "1.5 months free" }],
-      utilMo: 120, feesMo: 0, petMo: 65, oneTime: 300, petOnce: 550, deals: [{ months: 1.5, label: "1.5 months free" }], dealStatus: "uncertain", iz: false, lab: "r",
+      utilMo: 120, feesMo: 0, petMo: 65, oneTime: 603, petOnce: 550, deals: [{ months: 1.5, label: "1.5 months free" }], dealStatus: "uncertain", iz: false, lab: "r",
       estNote: "No studios listed; this card is the one-bedroom. The deal figure comes from a listing site, not the building; confirm.",
       climate: "Central heat and A/C, in-unit washer and dryer.",
       central: true, laundry: "unit",
